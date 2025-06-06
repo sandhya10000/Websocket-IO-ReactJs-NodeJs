@@ -1,35 +1,43 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Container, Button, TextField, Typography } from "@mui/material";
+import React, { useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const socketRef = useRef(null); // Store socket in a ref
+
+  const handleSubmit = (e) => {};
+  useEffect(() => {
+    // ✅ Initialize socket only once
+    socketRef.current = io("http://localhost:3000");
+
+    socketRef.current.on("connect", () => {
+      console.log("✅ Connected:", socketRef.current.id);
+    });
+
+    socketRef.current.on("Welcome", (msg) => {
+      console.log("📩 Server says:", msg);
+    });
+
+    // ✅ Cleanup to avoid memory leaks or multiple connections
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Container maxWidth="sm">
+      <Typography varient="h1" component="div" gutterBottom>
+        Welcome to Socket.io
+      </Typography>
 
-export default App
+      <form onSubmit={handleSubmit}>
+        <TextField id="outlined-basic" label="Outlined" varient="outlined" />
+        <Button variant="contained" color="primary"></Button>
+      </form>
+    </Container>
+  );
+};
+
+export default App;
