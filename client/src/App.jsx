@@ -1,40 +1,66 @@
-import { Container, Button, TextField, Typography } from "@mui/material";
-import React, { useEffect, useRef } from "react";
+import { Container, Button, TextField, Typography, Box } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
 import { io } from "socket.io-client";
 
 const App = () => {
-  const socketRef = useRef(null); // Store socket in a ref
+  const socket = useMemo(() => io("http://localhost:3000"), []);
+  const [message, setMessage] = useState("");
+  const [room, setRoom] = useState("");
+  const [socketId, setSocketId] = useState();
+  const [messages, setMessages] = useState([]);
+  console.log(messages);
 
-  const handleSubmit = (e) => {};
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    socket.emit("message", { message, room }); // or just { message }
+    setMessage("");
+  };
+
   useEffect(() => {
-    // ✅ Initialize socket only once
-    socketRef.current = io("http://localhost:3000");
-
-    socketRef.current.on("connect", () => {
-      console.log("✅ Connected:", socketRef.current.id);
+    socket.on("connect", () => {
+      console.log("✅ Connected:", socket.id);
     });
 
-    socketRef.current.on("Welcome", (msg) => {
-      console.log("📩 Server says:", msg);
+    socket.on("Welcome", (s) => {
+      console.log("👋", s);
     });
 
-    // ✅ Cleanup to avoid memory leaks or multiple connections
+    socket.on("receive-message", (data) => {
+      console.log("📨 Received:", data);
+      setMessage((messages) => [...messages, data]);
+    });
+
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      socket.disconnect();
     };
-  }, []);
+  }, [socket]);
 
   return (
     <Container maxWidth="sm">
-      <Typography varient="h1" component="div" gutterBottom>
-        Welcome to Socket.io
+      <Box sx={{ height: 200 }} />
+      <Typography variant="h4" component="div" gutterBottom>
+        {socketId}
       </Typography>
 
       <form onSubmit={handleSubmit}>
-        <TextField id="outlined-basic" label="Outlined" varient="outlined" />
-        <Button variant="contained" color="primary"></Button>
+        <TextField
+          value={messages}
+          onChange={(e) => setMessage(e.target.value)}
+          label="Message"
+          variant="outlined"
+          margin="normal"
+        />
+        <TextField
+          value={room}
+          onChange={(e) => setRoom(e.target.value)}
+          label="Room"
+          id="outlined-basic"
+          variant="outlined"
+          margin="normal"
+        />
+        <Button type="submit" variant="contained" color="primary">
+          Send
+        </Button>
       </form>
     </Container>
   );

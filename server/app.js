@@ -25,12 +25,12 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
   console.log("User Connected", socket.id);
 
-  socket.on("message", (data) => {
-    console.log(data);
-    io.emit("message", data);
+  socket.on("message", ({ room, message }) => {
+    console.log({ room, message });
+    io.to(room).emit("received-message", message);
   });
 });
-socket.on("disconnected", () => {
+io.on("disconnected", () => {
   console.log("User Disconnected", socket.id);
 });
 
